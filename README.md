@@ -23,5 +23,5 @@ Of note: weewx's StdReport runs after records are archived. The RSYNC skin runs 
 
 * It also does some added sanity checks, with complexity comes an increase in the chance of misconfiguration, although a few of the checks should help regardless of what RSYNC is used for ( it checks for remote permissions, missing routes, misconfigured local paths...
 
-* For full flexibilty, use this in conjunction with weewx's report_timing option 
+* For full flexibilty, use this in conjunction with weewx's **report_timing option**. See the section on [Customizing the report generation time](http://www.weewx.com/docs/customizing.htm#customizing_gen_time)
 
