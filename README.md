@@ -1,7 +1,7 @@
 # weewx-rsyncbackup
 A starting point for an rsync based backup service for weewx.
 
-These files are copies of the existing weewwx files, if you don't know where to put them, it's probably best you don't. (Unless you're a good - independent - swimmer. I can help, but I can't stop you drowning)
+These files are copies of the existing weewwx files, if you don't know where to put them, it's probably best you don't. (Unless you're a good - independent - swimmer. I can help, but I can't stop you drowning. Come to think of it, I'm not the best swimmer either!)
 
 They are a critical part of weewx and won't survive an upgrade.
 
