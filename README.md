@@ -9,7 +9,7 @@ Neither are they meant to permanently replace the original files, nor introduce 
 
 They are starting point for me to learn python, and incoporate the features I feel a need for (itch, scratch, done).  They may be rolled into a separate user skin in the very near future, or if deemed suitable rolled back into weewx. My crystal ball is fogged at the moment; when it clears I'll know, and then you will. :-)
 
-It was born out of the need for a simple way to reliably backup the weewx ( http://weewx.com ) database - constantly or as near to constantly as paranoia dictates, in particular for the rorpi project hosted here. That backup method uses the hidden 'feature' of  the existing weewx RSYNC skin and is outlined at https://github.com/glennmckechnie/rorpi-raspberrypi/wiki/rorpi-Using-weewx's-RSYNC-skin-as-a-backup-solution.
+It was born out of the need for a simple way to reliably backup the [weewx](http://weewx.com) database - constantly or as near to constantly as paranoia dictates, in particular for the [rorpi project hosted here](https://github.com/glennmckechnie/rorpi-raspberrypi). That backup method uses the hidden 'feature' of  the existing weewx RSYNC skin and is outlined at [Using weewx's RSYNC skin as a backup solution](https://github.com/glennmckechnie/rorpi-raspberrypi/wiki/rorpi-Using-weewx's-RSYNC-skin-as-a-backup-solution)
 
 Of note: weewx's StdReport runs after records are archived. The RSYNC skin runs under the StdReport service. This goes a long way towards ensuring a usable file, ie: database transactions should be null, the copy should be as good as the original.
 
