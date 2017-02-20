@@ -67,7 +67,8 @@ class RsyncUpload(object):
         over as required. this end builds those directories as required.
 
         rsync_option: Added to allow addition of -R, ( --relative use relative
-        path name. Others may be included but that's untested. No spaces allowed
+        path name. Currently no spaces are allowed. Defaults to -a to retain 
+        backwards compatability
 
         report_timing: See the weewx documentation for the full description on
         this addition. There are many options eg:-
@@ -75,9 +76,6 @@ class RsyncUpload(object):
 
         delete: delete remote files that don't match with local files. Use
         with caution.  [Optional.  Default is False.]
-
-        self_report_name: always defaults to the [[section]] name used in
-        weewx.conf
         """
         #self.local_root  = os.path.normpath(local_root)
         self.local_root  = local_root
@@ -143,7 +141,13 @@ class RsyncUpload(object):
         if self.rsync_opt is not None and len(self.rsync_opt.strip()) > 0:
             rsyncoptstring = "%s" % (self.rsync_opt)
         else:
-            rsyncoptstring = ""
+            # -a archive means:
+            #   recursive, copy symlinks as symlinks, preserve perm's, preserve
+            #   modification times, preserve group and owner, preserve device
+            #   files and special files, but not ACLs, no hardlinks, and no
+            #   extended attributes
+            # Retained for backwards compatability
+            rsyncoptstring = "-a"
         # haven't used nor tested this (-p 222) ???
         if self.port is not None and len(self.port.strip()) > 0:
             rsyncsshstring = "ssh -p %s" % (self.port,)
@@ -156,13 +160,6 @@ class RsyncUpload(object):
 
         # construct the command argument
         cmd = ['rsync']
-        # -a archive means:
-        #   recursive, copy symlinks as symlinks, preserve perm's, preserve
-        #   modification times, preserve group and owner, preserve device
-        #   files and special files, but not ACLs, no hardlinks, and no
-        #   extended attributes
-        cmd.extend(["-a"])
-
         # add any others as required, but add them now (before ssh str)
         if self.rsync_opt:
             cmd.extend(["%s" % rsyncoptstring])
@@ -202,7 +199,7 @@ class RsyncUpload(object):
             # request to copy all the directory's *contents*, whereas if it
             # doesn't, it copies the entire directory.
             # For a single directory copy, we want the former (backwards
-            # compatabile); so make it end  with a slash.
+            # compatabile); so make it end with a slash.
             #
             # of note : self.local_root  = os.path.normpath(local_root)
             # stanza used at the start (above) strips the last slash off ?????
