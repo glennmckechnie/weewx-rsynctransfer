@@ -67,8 +67,7 @@ class RsyncUpload(object):
         over as required. this end builds those directories as required.
 
         rsync_option: Added to allow addition of -R, ( --relative use relative
-        path name. Currently no spaces are allowed. Defaults to -a to retain 
-        backwards compatability
+        path name. Others may be included but that's untested. No spaces allowed
 
         report_timing: See the weewx documentation for the full description on
         this addition. There are many options eg:-
@@ -76,6 +75,9 @@ class RsyncUpload(object):
 
         delete: delete remote files that don't match with local files. Use
         with caution.  [Optional.  Default is False.]
+
+        self_report_name: always defaults to the [[section]] name used in
+        weewx.conf
         """
         #self.local_root  = os.path.normpath(local_root)
         self.local_root  = local_root
@@ -141,12 +143,6 @@ class RsyncUpload(object):
         if self.rsync_opt is not None and len(self.rsync_opt.strip()) > 0:
             rsyncoptstring = "%s" % (self.rsync_opt)
         else:
-            # -a archive means:
-            #   recursive, copy symlinks as symlinks, preserve perm's, preserve
-            #   modification times, preserve group and owner, preserve device
-            #   files and special files, but not ACLs, no hardlinks, and no
-            #   extended attributes
-            # Retained for backwards compatability
             rsyncoptstring = "-a"
         # haven't used nor tested this (-p 222) ???
         if self.port is not None and len(self.port.strip()) > 0:
@@ -160,6 +156,13 @@ class RsyncUpload(object):
 
         # construct the command argument
         cmd = ['rsync']
+        # -a archive means:
+        #   recursive, copy symlinks as symlinks, preserve perm's, preserve
+        #   modification times, preserve group and owner, preserve device
+        #   files and special files, but not ACLs, no hardlinks, and no
+        #   extended attributes
+        #cmd.extend(["-a"])
+
         # add any others as required, but add them now (before ssh str)
         if self.rsync_opt:
             cmd.extend(["%s" % rsyncoptstring])
@@ -199,7 +202,7 @@ class RsyncUpload(object):
             # request to copy all the directory's *contents*, whereas if it
             # doesn't, it copies the entire directory.
             # For a single directory copy, we want the former (backwards
-            # compatabile); so make it end with a slash.
+            # compatabile); so make it end  with a slash.
             #
             # of note : self.local_root  = os.path.normpath(local_root)
             # stanza used at the start (above) strips the last slash off ?????
@@ -340,6 +343,46 @@ class RsyncUpload(object):
                 to = ' to '
             t2= time.time()
             syslog.syslog(syslog.LOG_INFO, "rsyncupload: %s" % rsync_message % (t2-t1) + to + rsyncremotespec)
+            # Keep record of all http://australiawx.net/ uploads
+            #cmd =' cat /var/www/html/weewx/DATA/WL_stickertags.txt > /var/www/html/weewx/DATA/ALL_WL_stickertags.txt'
+            #catcmd = ['cat']
+            #catcmd.extend(['/var/www/html/weewx/DATA/WL_stickertags.txt'])
+            #catcmd.extend([' >> '])
+            #catcmd.extend(['/var/www/html/weewx/DATA/ALL_WL_stickertags.txt'])
+            #if weewx.debug >= 2:
+            #    syslog.syslog(syslog.LOG_DEBUG, "cat cmd %s" % catcmd)
+            #syslog.syslog(syslog.LOG_DEBUG, "cat cmd %s" % catcmd)
+            #subprocess.Popen(catcmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+            #date_cat_str = time.strftime("%Y%m%d")
+            #catcmd = ['/bin/cat']
+            #catcmd.extend(['/var/www/html/weewx/DATA/WL_stickertags.txt'])
+            #catcmd.extend(['>>'])
+            #cat_dest = "/var/www/html/weewx/DATA/" + date_cat_str + "_WL_stickertags.txt"
+            #catcmd.extend([cat_dest])
+            #if weewx.debug >= 2:
+            #    syslog.syslog(syslog.LOG_DEBUG, "catcmd %s" % catcmd)
+            #syslog.syslog(syslog.LOG_DEBUG, "dated catcmd %s" % catcmd)
+            #subprocess.Popen(catcmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            #try:
+            #    # perform the actual rsync transfer...
+            #    if weewx.debug >= 2:
+            #        syslog.syslog(syslog.LOG_DEBUG, "cat cmd is ... %s" % (catcmd))
+            #    runcatcmd = subprocess.Popen(catcmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            #    print "catcmd = ", runcatcmd
+            #    stdout = runcatcmd.communicate()[0]
+            #    stroutput = stdout.encode("utf-8").strip()
+            #except OSError, e:
+            #    #print "EXCEPTION"
+            #    if e.errno == errno.ENOENT:
+            #        syslog.syslog(syslog.LOG_ERR, "rsyncupload:cat  does not appear to be installed on this system. (errno %d, \"%s\")" % (e.errno, e.strerror))
+            #    raise
+
+            #https://stackoverflow.com/questions/13613336/python-concatenate-text-files
+            #os.system("cat /var/www/html/weewx/DATA/WL_stickertags.txt >> /var/www/html/weewx/DATA/catALL_WL_stickertags.txt")
+            date_cat_str = time.strftime("%Y%m%d")
+            os.system("cat /var/www/html/weewx/DATA/WL_stickertags.txt >> /var/www/html/weewx/DATA/" + date_cat_str + "_WL_stickertags.txt")
+
 
 
 if __name__ == '__main__':
