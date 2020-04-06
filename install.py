@@ -16,36 +16,35 @@ class rsynctransferInstaller(ExtensionInstaller):
             description='Transfer weewx files to where-ever',
             author="Glenn McKechnie",
             author_email="glenn.mckechnie@gmail.com",
-            archive_services=['user.rsynctransfer.Rsynct'],
             config={
-                'RsyncTransfer': {
-                    'server' : '\'192.168.1.62\'',
-                    'user' : 'pinochio',
-                    'rsync_options' : '-Orltvz',
-                    'dated_dir' : 'False'
-                    'delete' : '1',
-                    'skin': 'rsynctransfer',
-                    '#HTML_ROOT': 'rsynctransfer',
-                    '#' : """
-                   #-O, --omit-dir-times        omit directories from --times
-                   #-z, --compress              compress file data during the transfer
-                   #-v, --verbose               increase verbosity)
-                   # rsync_options = -rlptgoD
-                   # -D                          same as --devices --specials
-                   #  rsync_options = -rlptgoD
-                   # -o, --owner                 preserve owner (super-user only)
-                   #r sync_options = -rltg
-                   #-g, --group                 preserve group
-                   #rs ync_options = -rlt
-                   #-t, --times                 preserve modification times
-                   #rsy nc_options = -rl
-                   #-l, --links                 copy symlinks as symlinks
-                   #-r, --recursive             recurse into directories
-                   #rsyn c_options = -tOJrlenerators
-                   # -t, --times                 preserve modification times
-                   # -O, --omit-dir-times        omit directories from --times
-                   # -J, --omit-link-times       omit symlinks from --times""",
-                    }},
+	        'StdReport': {
+                    'RsyncTransfer': {
+                        'server' : '192.168.1.62',
+                        'user' : 'pinochio',
+                        'rsync_options' : '-Orltvz',
+                        'dated_dir' : 'False',
+                        'delete' : '1',
+                        'skin': 'rsynctransfer',
+                        '#' : """
+                       #-O, --omit-dir-times        omit directories from --times
+                       #-z, --compress              compress file data during the transfer
+                       #-v, --verbose               increase verbosity)
+                       # rsync_options = -rlptgoD
+                       # -D                          same as --devices --specials
+                       #  rsync_options = -rlptgoD
+                       # -o, --owner                 preserve owner (super-user only)
+                       #r sync_options = -rltg
+                       #-g, --group                 preserve group
+                       #rs ync_options = -rlt
+                       #-t, --times                 preserve modification times
+                       #rsy nc_options = -rl
+                       #-l, --links                 copy symlinks as symlinks
+                       #-r, --recursive             recurse into directories
+                       #rsyn c_options = -tOJrlenerators
+                       # -t, --times                 preserve modification times
+                       # -O, --omit-dir-times        omit directories from --times
+                       # -J, --omit-link-times       omit symlinks from --times""",
+                   }}},
             files=[('bin/user',
                     ['bin/user/rsynctransfer.py']),
                    ('skins/rsynctransfer',
