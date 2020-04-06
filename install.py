@@ -3,24 +3,24 @@
 # Co-opted by Glenn McKechnie 2017
 # Distributed under the terms of the GNU Public License (GPLv3)
 """
-                      #-O, --omit-dir-times        omit directories from --times
-                         #-z, --compress              compress file data during the transfer
-                         #-v, --verbose               increase verbosity)
-                         # rsync_options = -rlptgoD
-                         # -D                          same as --devices --specials
-                         #  rsync_options = -rlptgoD
-                         # -o, --owner                 preserve owner (super-user only)
-                         #r sync_options = -rltg
-                         #-g, --group                 preserve group
-                         #rs ync_options = -rlt
-                         #-t, --times                 preserve modification times
-                         #rsy nc_options = -rl
-                         #-l, --links                 copy symlinks as symlinks
-                         #-r, --recursive             recurse into directories
-                         #rsyn c_options = -tOJrlenerators
-                         # -t, --times                 preserve modification times
-                         # -O, --omit-dir-times        omit directories from --times
-                         # -J, --omit-link-times       omit symlinks from --times
+    #-O, --omit-dir-times        omit directories from --times
+    #-z, --compress              compress file data during the transfer
+    #-v, --verbose               increase verbosity)
+    # rsync_options = -rlptgoD
+    # -D                          same as --devices --specials
+    #  rsync_options = -rlptgoD
+    # -o, --owner                 preserve owner (super-user only)
+    #r sync_options = -rltg
+    #-g, --group                 preserve group
+    #rs ync_options = -rlt
+    #-t, --times                 preserve modification times
+    #rsy nc_options = -rl
+    #-l, --links                 copy symlinks as symlinks
+    #-r, --recursive             recurse into directories
+    #rsyn c_options = -tOJrlenerators
+    # -t, --times                 preserve modification times
+    # -O, --omit-dir-times        omit directories from --times
+    # -J, --omit-link-times       omit symlinks from --times
 """
 from setup import ExtensionInstaller
 
@@ -38,11 +38,6 @@ class rsynctransferInstaller(ExtensionInstaller):
             config={
                 'StdReport': {
                     'RsyncTransfer': {
-                        'server' : '192.168.1.62',
-                        'user' : 'pinochio',
-                        'rsync_options' : '-Orltvz',
-                        'dated_dir' : 'False',
-                        'delete' : '1',
                         'skin': 'rsynctransfer'
                    }}},
             files=[('bin/user',
