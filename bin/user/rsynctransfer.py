@@ -321,7 +321,7 @@ class Rsynct(SearchList):
             if wdebug >= 2:
                 syslog.syslog(syslog.LOG_DEBUG, "rsynct:rsync cmd is ... %s" % (cmd))
             rsynccmd = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            print ("cmd = ", cmd)
+            print ("cmd = ", cmd[0],cmd[1],cmd[2],cmd[3],cmd[4],cmd[5],cmd[6],cmd[7],cmd[8],)
             stdout = rsynccmd.communicate()[0]
             stroutput = stdout.decode("utf-8").strip()
             print("stroutput is %s", stroutput)
