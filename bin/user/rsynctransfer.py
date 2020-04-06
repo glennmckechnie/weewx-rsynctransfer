@@ -138,14 +138,14 @@ class Rsynct(SearchList):
         self.local_root  = self.generator.config_dict['StdReport'].get('HTML_ROOT')
 #        self.local_root  = self.generator.skin_dict.get('localroot')
 
-        loginf("RSYNCTRANSFER: localroot %s" % (self.local_root))
+        #loginf("RSYNCTRANSFER: localroot %s" % (self.local_root))
         ##self.remote_root = os.path.normpath(remote_root)
         self.remote_root = self.local_root,
         #self.server      = rsync_config_dict.get('server')
         self.server      = self.generator.skin_dict.get('server'),
         #self.user        = rsync_config_dict.get('user')
         self.user        = self.generator.skin_dict.get('user'),
-        loginf("USER = %s" % self.user)
+        #loginf("USER = %s" % self.user)
         print("USER = %s" % self.user)
         #self.dated_dir   = rsync_config_dict.get('dated_dir')
         dated_dir   = to_bool(self.generator.skin_dict.get('date_dir', 'False')),
@@ -220,11 +220,11 @@ class Rsynct(SearchList):
         else:
             # construct string for remote ssh
             if self.user is not None and len(self.user) > 0:
-                loginf("%s@%s:%s%s" % (self.user[0], self.server[0], self.remote_root[0], date_dir_str))
+                #loginf("%s@%s:%s%s" % (self.user[0], self.server[0], self.remote_root[0], date_dir_str))
                 print("as tuples:", self.user,self.server,self.remote_root, date_dir_str)
                 print("as strings:", self.user[0],self.server[0],self.remote_root[0], date_dir_str)
                 rsyncremotespec = "%s@%s:%s%s" % (self.user[0], self.server[0], self.remote_root[0], date_dir_str)
-                loginf("%s@%s:%s%s" % (self.user[0], self.server[0], self.remote_root[0], date_dir_str))
+                #loginf("%s@%s:%s%s" % (self.user[0], self.server[0], self.remote_root[0], date_dir_str))
                 rsync_rem_dir = "%s%s" % (self.remote_root, date_dir_str)
             else:
                 # ?? same account (user) as weewx
@@ -322,6 +322,7 @@ class Rsynct(SearchList):
                 syslog.syslog(syslog.LOG_DEBUG, "rsynct:rsync cmd is ... %s" % (cmd))
             rsynccmd = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             print ("cmd = ", cmd[0],cmd[1],cmd[2],cmd[3],cmd[4],cmd[5],cmd[6],cmd[7],cmd[8],)
+            loginf("cmdd = %s %s %s %s %s %s %s %s %s" % (cmd[0],cmd[1],cmd[2],cmd[3],cmd[4],cmd[5],cmd[6],cmd[7],cmd[8]))
             stdout = rsynccmd.communicate()[0]
             stroutput = stdout.decode("utf-8").strip()
             print("stroutput is %s", stroutput)
