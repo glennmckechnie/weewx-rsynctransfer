@@ -19,17 +19,35 @@ import sys
 import subprocess
 import syslog
 import time
+import configobj
 
 import weewx
-#import weewx.engine
+import weewx.engine
 import weewx.manager
 import weewx.units
 from weewx.engine import StdService
+from weeutil.weeutil import to_int, to_bool
+from weewx.cheetahgenerator import SearchList
+
+rsynct_version = "0.0.1"
+
+def logmsg(level, msg):
+    syslog.syslog(level,'rsynctransfer: %s' % msg)
+
+def loginf(msg):
+    logmsg(syslog.LOG_INFO, msg)
+
+def logerr(msg):
+    logmsg(syslog.LOG_ERR, msg)
+
+def logdbg(msg):
+    logmsg(syslog.LOG_DEBUG, msg)
 
 
 
-class Rsynct(StdService):
-    """Uploads a directory and all its descendants to a remote server.
+class Rsynct(SearchList):
+    """
+    Uploads a directory and all its descendants to a remote server.
 
     Its default behaviour is to keep track of what files have changed,
     and only updates changed files, eg: /var/www/html/weewx transfers
@@ -38,12 +56,11 @@ class Rsynct(StdService):
     Now modified to allow recursive behaviour, as well as additional
     directories at the remote end.
     """
+    
 
-    #def __init__(self, local_root, remote_root, server,
-    #             dated_dir, user=None, delete=False, port=None,
-    #             rsync_opt=None, ssh_options=None, compress=False,
-    #             log_success=True):
-    def __init__(self,queue,config_dict):
+    def __init__(self, generator):
+    
+        SearchList.__init__(self, generator)
         """Initialize an instance of RsyncUpload.
 
         After initializing, call method run() to perform the upload.
@@ -82,33 +99,83 @@ class Rsynct(StdService):
 
         self_report_name: always defaults to the [[section]] name used in
         weewx.conf
+                #local_root=local_root,
+                #remote_root=self.skin_dict['path'],
+                #server=self.skin_dict['server'],
+                #user=self.skin_dict.get('user'),
+                #port=self.skin_dict.get('port'),
+                # Glenn McKechnie
+                #rsync_opt=self.skin_dict.get('rsync_options'),
+                #ssh_options=self.skin_dict.get('ssh_options'),
+                compress=to_bool(self.skin_dict.get('compress', False)),
+                delete=to_bool(self.skin_dict.get('delete', False)),
+
+        server=None
+        dated_dir=None
+        user=None
+        delete=False
+        date_dir=False
+        port=None
+        rsync_opt=None
+        ssh_options=None
+        compress=False
+        log_success=True
         """
 
-        self.queue = queue
+        self.rsynct_version = rsynct_version
+        # get our rsynctransfer config dictionary
+        #syslog.syslog(syslog.LOG_INFO, "RSYNCTRANSFER: sys.argv[2] - %s" % sys.argv[1])
+        #config_dict = configobj.ConfigObj(file_error=True, encoding='utf-8')
+        #rsync_config_dict = config_dict.get('rsynctransfer', {})
 
-        # get our RsyncThread config dictionary
-        rsync_config_dict = config_dict.get('rsynctransfer', {})
 
         # are we enabled?
-        self.enable = rsync_config_dict.get('enable', False)
+        #self.enable = rsync_config_dict.get('enable', True)
 
         #self.local_root  = os.path.normpath(local_root)
-        self.local_root  = rsync_config_dict.get('local_root')
-        #self.remote_root = os.path.normpath(remote_root)
-        self.server      = rsync_config_dict.get('server')
-        self.user        = rsync_config_dict.get('user')
-        self.dated_dir   = rsync_config_dict.get('dated_dir')
-        self.delete      = rsync_config_dict.get('delete')
-        self.port        = rsync_config_dict.get('port')
-        self.rsync_opt = rsync_config_dict.get('rsync_opt')
-        self.ssh_options = rsync_config_dict.get('ssh_options')
-        self.compress    = rsync_config_dict.get('compress')
-        self.log_success = rsync_config_dict.get('log_success')
-        wdebug = 2
-        syslog.syslog(syslog.LOG_INFO, "RSYNCTRANSFER: user- %s, debug is at %s" % (self.user, wdebug))
+        #self.local_root  = rsync_config_dict.get('localroot')
 
-    def run(self):
-        """Perform the actual upload.
+        self.local_root  = self.generator.config_dict['StdReport'].get('HTML_ROOT')
+#        self.local_root  = self.generator.skin_dict.get('localroot')
+
+        loginf("RSYNCTRANSFER: localroot %s" % (self.local_root))
+        ##self.remote_root = os.path.normpath(remote_root)
+        self.remote_root = self.local_root,
+        #self.server      = rsync_config_dict.get('server')
+        self.server      = self.generator.skin_dict.get('server'),
+        #self.user        = rsync_config_dict.get('user')
+        self.user        = self.generator.skin_dict.get('user'),
+        loginf("USER = %s" % self.user)
+        print("USER = %s" % self.user)
+        #self.dated_dir   = rsync_config_dict.get('dated_dir')
+        dated_dir   = to_bool(self.generator.skin_dict.get('date_dir', 'False')),
+        print (self.generator.skin_dict.get('dated_dir', False)),
+        print("dated _dir = %s : type(dated dir) = %s" % (dated_dir, type(dated_dir)))
+        # rsyncupload.py - dated_dir=to_bool(self.skin_dict.get('dated_dir', False)),
+        #self.port        = rsync_config_dict.get('port')
+        self.port        = self.generator.skin_dict.get('port',22),
+        print("PORT = %s" % self.port)
+        #self.rsync_opt   = rsync_config_dict.get('rsync_opt')
+        self.rsync_opt   = self.generator.skin_dict.get('rsync_options','-a'),
+        print("RSYNC OPT = %s" % self.rsync_opt)
+        #self.ssh_options = rsync_config_dict.get('ssh_options')
+        self.ssh_options = self.generator.skin_dict.get('ssh_options', " "),
+        print("ssh_options %s" % self.ssh_options)
+        #self.compress    = to_bool(rsync_config_dict.get('compress', False)),
+        self.compress    = to_bool(self.generator.skin_dict.get('compress', False)),
+        #self.delete      = rsync_config_dict.get('delete')
+        #self.delete      = rsync_config_dict.get('delete')
+        #delete           = to_bool(rsync_config_dict.get('delete', False)),
+        self.delete           = to_bool(self.generator.skin_dict.get('delete', False)),
+        #self.log_success = rsync_config_dict.get('log_success')
+        self.log_success = self.generator.skin_dict.get('log_success'),
+        wdebug = 1,
+        syslog.syslog(syslog.LOG_INFO, "RSYNCTRANSFER: user- %s, debug is at %s" % (self.user, wdebug))
+        #return 
+
+
+        """
+        Perform the actual upload.
 
         Check for rsync error codes and log the obvious ones
         """
@@ -121,15 +188,18 @@ class Rsynct(StdService):
         # Set up for later tests
         src_dir = self.local_root.split()
         src_len = len(src_dir)
-        syslog.syslog(syslog.LOG_DEBUG, "rsynct WEEWX.DEBUG: %s" % wee.debug)
+        syslog.syslog(syslog.LOG_DEBUG, "rsynct WEEWX.DEBUG: %s" % wdebug)
         if wdebug >= 2:
             syslog.syslog(syslog.LOG_DEBUG, "rsynct:local root string length: %s" % src_len)
 
         # If true, create the remote directory with a date structure
         # eg: <path to backup directory>/2017/02/12/var/lib/weewx...
-        if self.dated_dir:
+        if dated_dir:
+            print("true")
             date_dir_str = time.strftime("/%Y/%m/%d/")
+            date_dir_str = ''
         else:
+            print("none")
             date_dir_str = ''
         if wdebug >= 2:
             syslog.syslog(syslog.LOG_INFO, "rsynct:timestamp used for rsyncremotespec  - %s" % date_dir_str)
@@ -149,27 +219,33 @@ class Rsynct(StdService):
 
         else:
             # construct string for remote ssh
-            if self.user is not None and len(self.user.strip()) > 0:
-                rsyncremotespec = "%s@%s:%s%s" % (self.user, self.server, self.remote_root, date_dir_str)
+            if self.user is not None and len(self.user) > 0:
+                loginf("%s@%s:%s%s" % (self.user[0], self.server[0], self.remote_root[0], date_dir_str))
+                print("as tuples:", self.user,self.server,self.remote_root, date_dir_str)
+                print("as strings:", self.user[0],self.server[0],self.remote_root[0], date_dir_str)
+                rsyncremotespec = "%s@%s:%s%s" % (self.user[0], self.server[0], self.remote_root[0], date_dir_str)
+                loginf("%s@%s:%s%s" % (self.user[0], self.server[0], self.remote_root[0], date_dir_str))
                 rsync_rem_dir = "%s%s" % (self.remote_root, date_dir_str)
             else:
                 # ?? same account (user) as weewx
                 rsyncremotespec = "%s:%s%s" % (self.server, self.remote_root, date_dir_str)
                 rsync_rem_dir = "%s%s" % (self.remote_root, date_dir_str)
         # A chance to add rsync options eg -R (no spaces allowed)
-        if self.rsync_opt is not None and len(self.rsync_opt.strip()) > 0:
+        if self.rsync_opt is not None and len(self.rsync_opt) > 0:
             rsyncoptstring = "%s" % (self.rsync_opt)
         else:
             rsyncoptstring = ""
         # haven't used nor tested this (-p 222) ???
-        if self.port is not None and len(self.port.strip()) > 0:
-            rsyncsshstring = "ssh -p %s" % (self.port,)
+        if self.port is not None and len(self.port) > 0:
+            rsyncsshstring = "ssh -p %s" % (self.port)
         else:
             rsyncsshstring = "ssh"
 
         # nor tested this ???
-        if self.ssh_options is not None and len(self.ssh_options.strip()) > 0:
-            rsyncsshstring = rsyncsshstring + " " + self.ssh_options
+        if self.ssh_options is not None and len(self.ssh_options) > 0:
+            print(self.ssh_options)
+            # TypeError: Can't convert 'tuple' object to str implicitly
+            # rsyncsshstring = rsyncsshstring + " " + self.ssh_options
 
         # construct the command argument
         cmd = ['rsync']
@@ -245,9 +321,10 @@ class Rsynct(StdService):
             if wdebug >= 2:
                 syslog.syslog(syslog.LOG_DEBUG, "rsynct:rsync cmd is ... %s" % (cmd))
             rsynccmd = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            #print "cmd = ", cmd
+            print ("cmd = ", cmd)
             stdout = rsynccmd.communicate()[0]
-            stroutput = stdout.encode("utf-8").strip()
+            stroutput = stdout.decode("utf-8").strip()
+            print("stroutput is %s", stroutput)
         except OSError as e:
             #print "EXCEPTION"
             if e.errno == errno.ENOENT:
@@ -364,28 +441,27 @@ class Rsynct(StdService):
 
 if __name__ == '__main__':
 
-   # To run this manually it's best to construct a minimalist, renamed
-   # weewx.conf file, with (possibly) modified skin files, and run that
-   # to test this script with :-
-   #
-   # wee_reports /etc/weewx/weewx-test.conf
-   #
-   # The report_timing stanza is ignored when testing with wee_reports -
-   # everything else will be actioned on though.
-   #
-   # Running this directly returns an error
-   #$ PYTHONPATH=/usr/share/weewx python /usr/share/weewx/weeutil/rsyncupload.py
-   #   Traceback (most recent call last):
-   #  File "/usr/share/weewx/weeutil/rsyncupload.py", line 23, in <module>
-   #    import weewx.engine
-   #  File "/usr/share/weewx/weewx/engine.py", line 26, in <module>
-   #    import weewx.accum
-   #  File "/usr/share/weewx/weewx/accum.py", line 12, in <module>
-   #    from weewx.units import ListOfDicts
-   #  File "/usr/share/weewx/weewx/units.py", line 15, in <module>
-   #    import weeutil.weeutil
-   #ImportError: No module named weeutil
-
+    # To run this manually it's best to construct a minimalist, renamed
+    # weewx.conf file, with (possibly) modified skin files, and run that
+    # to test this script with :-
+    #
+    # wee_reports /etc/weewx/weewx-test.conf
+    #
+    # The report_timing stanza is ignored when testing with wee_reports -
+    # everything else will be actioned on though.
+    #
+    # Running this directly returns an error
+    #$ PYTHONPATH=/usr/share/weewx python /usr/share/weewx/weeutil/rsyncupload.py
+    #   Traceback (most recent call last):
+    #  File "/usr/share/weewx/weeutil/rsyncupload.py", line 23, in <module>
+    #    import weewx.engine
+    #  File "/usr/share/weewx/weewx/engine.py", line 26, in <module>
+    #    import weewx.accum
+    #  File "/usr/share/weewx/weewx/accum.py", line 12, in <module>
+    #    from weewx.units import ListOfDicts
+    #  File "/usr/share/weewx/weewx/units.py", line 15, in <module>
+    #    import weeutil.weeutil
+    #ImportError: No module named weeutil
 
     import weewx
     import configobj
@@ -395,7 +471,7 @@ if __name__ == '__main__':
     syslog.setlogmask(syslog.LOG_UPTO(syslog.LOG_DEBUG))
 
     if len(sys.argv) < 2:
-        #print """Usage: rsyncupload.py path-to-configuration-file [path-to-be-rsync'd]"""
+        #print Usage: rsyncupload.py path-to-configuration-file [path-to-be-rsync'd]
         sys.exit(weewx.CMD_ERROR)
 
     try:
@@ -414,5 +490,6 @@ if __name__ == '__main__':
     else:
         rsync_dir = sys.argv[2]
 
-    rsync_upload = RsyncUpload(rsync_dir, **config_dict['StdReport']['RSYNC'])
-    rsync_upload.run()
+    rsync_transfer = Rsynct(rsync_dir, **config_dict['StdReport']['RSYNC'])
+    rsynctransfer()
+    

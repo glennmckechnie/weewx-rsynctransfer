@@ -18,13 +18,14 @@ class rsynctransferInstaller(ExtensionInstaller):
             author_email="glenn.mckechnie@gmail.com",
             archive_services=['user.rsynctransfer.Rsynct'],
             config={
-                'Rsynctransfer': {
-                    'server' : '192.168.1.62',
+                'RsyncTransfer': {
+                    'server' : '\'192.168.1.62\'',
                     'user' : 'pinochio',
                     'rsync_options' : '-Orltvz',
-                    'delete' : '0',
+                    'dated_dir' : 'False'
+                    'delete' : '1',
                     'skin': 'rsynctransfer',
-                    'HTML_ROOT': 'rsynctransfer',
+                    '#HTML_ROOT': 'rsynctransfer',
                     '#' : """
                    #-O, --omit-dir-times        omit directories from --times
                    #-z, --compress              compress file data during the transfer
