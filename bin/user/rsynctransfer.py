@@ -124,7 +124,7 @@ class Rsynct(SearchList):
 
         self.rsynct_version = rsynct_version
         # get our rsynctransfer config dictionary
-        #syslog.syslog(syslog.LOG_INFO, "RSYNCTRANSFER: sys.argv[2] - %s" % sys.argv[1])
+        #loginf("RSYNCTRANSFER: sys.argv[2] - %s" % sys.argv[1])
         #config_dict = configobj.ConfigObj(file_error=True, encoding='utf-8')
         #rsync_config_dict = config_dict.get('rsynctransfer', {})
 
@@ -134,44 +134,30 @@ class Rsynct(SearchList):
 
         #self.local_root  = os.path.normpath(local_root)
         #self.local_root  = rsync_config_dict.get('localroot')
+        _s = self.generator.skin_dict['RsyncTransfer']
 
         self.local_root  = self.generator.config_dict['StdReport'].get('HTML_ROOT')
-#        self.local_root  = self.generator.skin_dict.get('localroot')
 
-        #loginf("RSYNCTRANSFER: localroot %s" % (self.local_root))
-        ##self.remote_root = os.path.normpath(remote_root)
         self.remote_root = self.local_root,
-        #self.server      = rsync_config_dict.get('server')
-        self.server      = self.generator.skin_dict.get('server'),
-        #self.user        = rsync_config_dict.get('user')
-        self.user        = self.generator.skin_dict.get('user'),
-        #loginf("USER = %s" % self.user)
-        print("USER = %s" % self.user)
-        #self.dated_dir   = rsync_config_dict.get('dated_dir')
-        dated_dir   = to_bool(self.generator.skin_dict.get('date_dir', 'False')),
-        print (self.generator.skin_dict.get('dated_dir', False)),
-        print("dated _dir = %s : type(dated dir) = %s" % (dated_dir, type(dated_dir)))
-        # rsyncupload.py - dated_dir=to_bool(self.skin_dict.get('dated_dir', False)),
-        #self.port        = rsync_config_dict.get('port')
-        self.port        = self.generator.skin_dict.get('port',22),
-        print("PORT = %s" % self.port)
-        #self.rsync_opt   = rsync_config_dict.get('rsync_opt')
-        self.rsync_opt   = self.generator.skin_dict.get('rsync_options','-a'),
-        print("RSYNC OPT = %s" % self.rsync_opt)
-        #self.ssh_options = rsync_config_dict.get('ssh_options')
-        self.ssh_options = self.generator.skin_dict.get('ssh_options', " "),
-        print("ssh_options %s" % self.ssh_options)
-        #self.compress    = to_bool(rsync_config_dict.get('compress', False)),
-        self.compress    = to_bool(self.generator.skin_dict.get('compress', False)),
-        #self.delete      = rsync_config_dict.get('delete')
-        #self.delete      = rsync_config_dict.get('delete')
-        #delete           = to_bool(rsync_config_dict.get('delete', False)),
-        self.delete           = to_bool(self.generator.skin_dict.get('delete', False)),
-        #self.log_success = rsync_config_dict.get('log_success')
-        self.log_success = self.generator.skin_dict.get('log_success'),
-        wdebug = 1,
-        syslog.syslog(syslog.LOG_INFO, "RSYNCTRANSFER: user- %s, debug is at %s" % (self.user, wdebug))
-        #return 
+        self.server      = _s.get('server'),
+        self.user        = _s.get('user'),
+        dated_dir        = to_bool(_s.get('dated_dir', 'False')),
+        self.port        = _s.get('port',22),
+        self.rsync_opt   = _s.get('rsync_options','-a'),
+        self.ssh_options = _s.get('ssh_options', " "),
+        self.compress    = to_bool(_s.get('compress', False)),
+        self.delete      = to_bool(_s.get('delete', False)),
+        self.log_success = _s.get('log_success'),
+        #return
+
+        wdebug = 2
+        if wdebug >= 2:
+            print("USER = %s" % self.user)
+            print (self.generator.skin_dict.get('dated_dir', False)),
+            print("dated _dir = %s : type(dated dir) = %s" % (dated_dir, type(dated_dir)))
+            print("PORT = %s" % self.port)
+            print("RSYNC OPT = %s" % self.rsync_opt)
+            print("ssh_options %s" % self.ssh_options)
 
 
         """
@@ -180,7 +166,6 @@ class Rsynct(SearchList):
         Check for rsync error codes and log the obvious ones
         """
 
-        wdebug = 2
         t1 = time.time()
         # With multiple configs available, prefix with the skin or label name
         # for log clarity
@@ -188,9 +173,9 @@ class Rsynct(SearchList):
         # Set up for later tests
         src_dir = self.local_root.split()
         src_len = len(src_dir)
-        syslog.syslog(syslog.LOG_DEBUG, "rsynct WEEWX.DEBUG: %s" % wdebug)
+        #logdbg("WEEWX.DEBUG: %s" % wdebug)
         if wdebug >= 2:
-            syslog.syslog(syslog.LOG_DEBUG, "rsynct:local root string length: %s" % src_len)
+            logdbg("local root string length: %s" % src_len)
 
         # If true, create the remote directory with a date structure
         # eg: <path to backup directory>/2017/02/12/var/lib/weewx...
@@ -202,7 +187,7 @@ class Rsynct(SearchList):
             print("none")
             date_dir_str = ''
         if wdebug >= 2:
-            syslog.syslog(syslog.LOG_INFO, "rsynct:timestamp used for rsyncremotespec  - %s" % date_dir_str)
+            loginf("timestamp used for rsyncremotespec  - %s" % date_dir_str)
 
         # allow local transfers
         if self.server == 'localhost':
@@ -210,12 +195,12 @@ class Rsynct(SearchList):
             rsync_rem_dir = "%s%s" % (self.remote_root, date_dir_str)
             self.user = ''
             if wdebug >= 2:
-                syslog.syslog(syslog.LOG_DEBUG, "rsynct:self.remote_root is %s and rsync_rem_dir is %s" %  (self.remote_root, rsync_rem_dir))
+                logdbg("self.remote_root is %s and rsync_rem_dir is %s" %  (self.remote_root, rsync_rem_dir))
             # and attempt to prevent disasters!
             if self.remote_root == '/':
                 rsyncremotespec = '/tmp/%s/' % (self.server)
-                err_mes = "rsynct:rsyncupload:  ERR Attempting to write files to %s redirecting to %s ! FIXME !" %  (self.remote_root, rsyncremotespec)
-                syslog.syslog(syslog.LOG_ERR, "%s" %  (err_mes))
+                err_mes = ":  ERR Attempting to write files to %s redirecting to %s ! FIXME !" %  (self.remote_root, rsyncremotespec)
+                logerr("%s" %  (err_mes))
 
         else:
             # construct string for remote ssh
@@ -243,9 +228,10 @@ class Rsynct(SearchList):
 
         # nor tested this ???
         if self.ssh_options is not None and len(self.ssh_options) > 0:
-            print(self.ssh_options)
+            #print(self.ssh_options)
             # TypeError: Can't convert 'tuple' object to str implicitly
             # rsyncsshstring = rsyncsshstring + " " + self.ssh_options
+            pass
 
         # construct the command argument
         cmd = ['rsync']
@@ -278,15 +264,15 @@ class Rsynct(SearchList):
         # If we don't do this, rsync will complain about non existant files
         if src_len > 1:
             if wdebug >= 2:
-                syslog.syslog(syslog.LOG_DEBUG, "rsynct:original local root string: %s" % self.local_root)
-                syslog.syslog(syslog.LOG_DEBUG, "rsynct:local root string length: %s" % src_len)
-                syslog.syslog(syslog.LOG_DEBUG, "rsynct:src_dir: %s" % src_dir)
+                logdbg("original local root string: %s" % self.local_root)
+                logdbg("local root string length: %s" % src_len)
+                logdbg("src_dir: %s" % src_dir)
             for step in range(src_len):
                 # we don't want to force os.sep if we have multiple dirs use them as entered
                 #if src_dir[step].endswith(os.sep):
                 multi_loc = src_dir[step]
                 if wdebug >= 2:
-                    syslog.syslog(syslog.LOG_DEBUG, "rsynct:multi_loc = %s" % multi_loc)
+                    logdbg("multi_loc = %s" % multi_loc)
                 cmd.extend([multi_loc])
         else:
             # Keep original 'transfer to remote web server' behaviour - append
@@ -308,28 +294,27 @@ class Rsynct(SearchList):
                 rsynclocalspec = self.local_root
                 cmd.extend([rsynclocalspec])
                 if wdebug >= 2:
-                    syslog.syslog(syslog.LOG_DEBUG, "rsynct:rsynclocalspec ends with %s" % rsynclocalspec)
+                    logdbg("rsynclocalspec ends with %s" % rsynclocalspec)
             else:
                 rsynclocalspec = self.local_root + os.sep
                 cmd.extend([rsynclocalspec])
                 if wdebug >= 2:
-                    syslog.syslog(syslog.LOG_DEBUG, "rsynct:rsynclocalspec + os.sep %s" % rsynclocalspec)
+                    logdbg("rsynclocalspec + os.sep %s" % rsynclocalspec)
         cmd.extend([rsyncremotespec])
 
         try:
             # perform the actual rsync transfer...
             if wdebug >= 2:
-                syslog.syslog(syslog.LOG_DEBUG, "rsynct:rsync cmd is ... %s" % (cmd))
+                loginf("cmd = %s %s %s %s %s %s %s %s %s" % (cmd[0],cmd[1],cmd[2],cmd[3],cmd[4],cmd[5],cmd[6],cmd[7],cmd[8]))
+            #print ("cmd = ", cmd[0],cmd[1],cmd[2],cmd[3],cmd[4],cmd[5],cmd[6],cmd[7],cmd[8],)
             rsynccmd = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            print ("cmd = ", cmd[0],cmd[1],cmd[2],cmd[3],cmd[4],cmd[5],cmd[6],cmd[7],cmd[8],)
-            loginf("cmdd = %s %s %s %s %s %s %s %s %s" % (cmd[0],cmd[1],cmd[2],cmd[3],cmd[4],cmd[5],cmd[6],cmd[7],cmd[8]))
             stdout = rsynccmd.communicate()[0]
             stroutput = stdout.decode("utf-8").strip()
-            print("stroutput is %s", stroutput)
+            #print("stroutput is %s", stroutput)
         except OSError as e:
             #print "EXCEPTION"
             if e.errno == errno.ENOENT:
-                syslog.syslog(syslog.LOG_ERR, "rsynct:rsyncupload: rsync does not appear to be installed on this system. (errno %d, \"%s\")" % (e.errno, e.strerror))
+                logerr(": rsync does not appear to be installed on this system. (errno %d, \"%s\")" % (e.errno, e.strerror))
             raise
 
         # we have some output from rsync so generate an appropriate message
@@ -350,11 +335,11 @@ class Rsynct(SearchList):
 
                 Nbytes = rsyncinfo['Total transferred file size']
                 if N is not None and Nbytes is not None:
-                    rsync_message = "rsynct:rsync'd %s files (%s) in %%0.2f seconds" % (N, Nbytes)
+                    rsync_message = "rsync'd %s files (%s) in %%0.2f seconds" % (N, Nbytes)
                 else:
-                    rsync_message = "rsynct:rsync executed in %0.2f seconds"
+                    rsync_message = "rsync executed in %0.2f seconds"
             except:
-                rsync_message = "rsynct:rsync :exception raised: executed in %0.2f seconds"
+                rsync_message = "rsync :exception raised: executed in %0.2f seconds"
         else:
             # suspect we have an rsync error so tidy stroutput
             # and display a message
@@ -362,37 +347,37 @@ class Rsynct(SearchList):
             stroutput = stroutput.replace("\r", "")
             # Attempt to catch a few errors that may occur and deal with them
             # see man rsync for EXIT VALUES
-            rsync_message = "rsynct:rsync command failed after %0.2f seconds (set 'wdebug = 1'),"
+            rsync_message = "rsync command failed after %0.2f seconds (set 'wdebug = 1'),"
             if "code 1)" in stroutput:
                 if wdebug >= 1:
-                    syslog.syslog(syslog.LOG_DEBUG, "rsynct:rsyncupload: rsync code 1 - %s" % stroutput)
-                rsync_message = "rsynct:syntax error in rsync command - set debug = 1 - ! FIX ME !"
-                syslog.syslog(syslog.LOG_INFO, "rsynct:rsyncupload:  ERR %s " % (rsync_message))
-                rsync_message = "rsynct:code 1, syntax error, failed rsync executed in %0.2f seconds"
+                    logdbg(": rsync code 1 - %s" % stroutput)
+                rsync_message = "syntax error in rsync command - set debug = 1 - ! FIX ME !"
+                loginf(":  ERR %s " % (rsync_message))
+                rsync_message = "code 1, syntax error, failed rsync executed in %0.2f seconds"
 
             elif ("code 23" and "Read-only file system") in stroutput:
                 # read-only file system
                 # sadly, won't be detected until after first succesful transfer
                 # but it's useful then!
                 if wdebug >= 1:
-                    syslog.syslog(syslog.LOG_DEBUG, "rsynct:rsyncupload: rsync code 23 - %s" % stroutput)
-                syslog.syslog(syslog.LOG_INFO, "rsynct:  ERR Read only file system ! FIX ME !")
-                rsync_message = "rsynct:code 23, read-only, rsync failed executed in %0.2f seconds"
+                    logdbg(": rsync code 23 - %s" % stroutput)
+                loginf(":  ERR Read only file system ! FIX ME !")
+                rsync_message = "code 23, read-only, rsync failed executed in %0.2f seconds"
             elif ("code 23" and "link_stat") in stroutput:
                 # likely to be that a local path doesn't exist - possible typo?
                 if wdebug >= 1:
-                    syslog.syslog(syslog.LOG_DEBUG, "rsynct:rsyncupload: rsync code 23 found %s" % stroutput)
-                rsync_message = "rsynct:rsync code 23 : is %s correct? ! FIXME !" % (rsynclocalspec)
-                syslog.syslog(syslog.LOG_INFO, "rsyncupload:  ERR %s " % rsync_message)
-                rsync_message = "rsynct:code 23, link_stat, rsync failed executed in %0.2f seconds"
+                    logdbg(": rsync code 23 found %s" % stroutput)
+                rsync_message = "rsync code 23 : is %s correct? ! FIXME !" % (rsynclocalspec)
+                loginf(":  ERR %s " % rsync_message)
+                rsync_message = "code 23, link_stat, rsync failed executed in %0.2f seconds"
 
             elif "code 11" in stroutput:
                 # directory structure at remote end is missing - needs creating
                 # on this pass. Should be Ok on next pass.
                 if wdebug >= 1:
-                    syslog.syslog(syslog.LOG_DEBUG, "rsynct:rsyncupload: rsync code 11 - %s" % stroutput)
-                rsync_message = "rsynct:rsync code 11 found Creating %s as a fix?" % (rsync_rem_dir)
-                syslog.syslog(syslog.LOG_INFO, "rsyncupload: %s"  % rsync_message)
+                    logdbg(": rsync code 11 - %s" % stroutput)
+                rsync_message = "rsync code 11 found Creating %s as a fix?" % (rsync_rem_dir)
+                loginf(": %s"  % rsync_message)
                 # laborious but apparently necessary, the only way the command will run!?
                 # build the ssh command - n.b:  spaces cause wobblies!
                 if self.server == 'localhost':
@@ -400,9 +385,9 @@ class Rsynct(SearchList):
                     cmd.extend(['-p'])
                     cmd.extend(["%s" % rsyncremotespec])
                     if wdebug >= 2:
-                        syslog.syslog(syslog.LOG_DEBUG, "mkdircmd %s" % cmd)
+                        logdbg("mkdircmd %s" % cmd)
                     subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-                    rsync_message = "rsynct:code 11, rsync mkdir cmd executed in % 0.2f seconds"
+                    rsync_message = "code 11, rsync mkdir cmd executed in % 0.2f seconds"
                 else:
                     cmd = ['ssh']
                     cmd.extend(["%s@%s" % (self.user, self.server)])
@@ -410,25 +395,25 @@ class Rsynct(SearchList):
                     cmd.extend([mkdirstr])
                     cmd.extend([rsync_rem_dir])
                     if wdebug >= 2:
-                        syslog.syslog(syslog.LOG_DEBUG, "sshcmd %s" % cmd)
+                        logdbg("sshcmd %s" % cmd)
                     subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                     rsyncremotespec = rsync_rem_dir
-                    rsync_message = "rsynct:code 11, rsync mkdir cmd executed in % 0.2f seconds"
-                rsync_message = "rsynct:rsync executed in %0.2f seconds, built destination (remote) directories"
+                    rsync_message = "code 11, rsync mkdir cmd executed in % 0.2f seconds"
+                rsync_message = "rsync executed in %0.2f seconds, built destination (remote) directories"
             elif ("code 12") and ("Permission denied") in stroutput:
                 if wdebug >= 1:
-                    syslog.syslog(syslog.LOG_DEBUG, "rsynct:rsyncupload: rsync code 12 - %s" % stroutput)
-                rsync_message = "rsynct:Permission error in rsync command, probably remote authentication ! FIX ME !"
-                syslog.syslog(syslog.LOG_INFO, "rsynct:rsyncupload:  ERR %s " % (rsync_message))
-                rsync_message = "rsynct:code 12, rsync failed, executed in % 0.2f seconds"
+                    logdbg(": rsync code 12 - %s" % stroutput)
+                rsync_message = "Permission error in rsync command, probably remote authentication ! FIX ME !"
+                loginf(":  ERR %s " % (rsync_message))
+                rsync_message = "code 12, rsync failed, executed in % 0.2f seconds"
             elif ("code 12") and ("No route to host") in stroutput:
                 if wdebug >= 1:
-                    syslog.syslog(syslog.LOG_DEBUG, "rsynct:rsyncupload: rsync code 12 - %s" % stroutput)
-                rsync_message = "rsynct:No route to host error in rsync command ! FIX ME !"
-                syslog.syslog(syslog.LOG_INFO, "rsynct:rsyncupload:  ERR %s " % (rsync_message))
-                rsync_message = "rsynct:code 12, rsync failed, executed in % 0.2f seconds"
+                    logdbg(": rsync code 12 - %s" % stroutput)
+                rsync_message = "No route to host error in rsync command ! FIX ME !"
+                loginf(":  ERR %s " % (rsync_message))
+                rsync_message = "code 12, rsync failed, executed in % 0.2f seconds"
             else:
-                syslog.syslog(syslog.LOG_ERR, "rsynct:ERROR: rsyncupload: [%s] reported this error: %s" % (cmd, stroutput))
+                logerr("ERROR: : [%s] reported this error: %s" % (cmd, stroutput))
 
         if self.log_success:
             if wdebug == 0:
@@ -437,7 +422,7 @@ class Rsynct(SearchList):
             else:
                 to = ' to '
             t2= time.time()
-            syslog.syslog(syslog.LOG_INFO, "rsyncupload: %s" % rsync_message % (t2-t1) + to + rsyncremotespec)
+            loginf(": %s" % rsync_message % (t2-t1) + to + rsyncremotespec)
 
 
 if __name__ == '__main__':
@@ -452,9 +437,9 @@ if __name__ == '__main__':
     # everything else will be actioned on though.
     #
     # Running this directly returns an error
-    #$ PYTHONPATH=/usr/share/weewx python /usr/share/weewx/weeutil/rsyncupload.py
+    #$ PYTHONPATH=/usr/share/weewx python /usr/share/weewx/weeutil/rsynctransferfer.py
     #   Traceback (most recent call last):
-    #  File "/usr/share/weewx/weeutil/rsyncupload.py", line 23, in <module>
+    #  File "/usr/share/weewx/weeutil/rsynctransfer.py", line 23, in <module>
     #    import weewx.engine
     #  File "/usr/share/weewx/weewx/engine.py", line 26, in <module>
     #    import weewx.accum
@@ -468,11 +453,11 @@ if __name__ == '__main__':
     import configobj
 
     wdebug = 2
-    syslog.openlog('rsyncupload', syslog.LOG_PID|syslog.LOG_CONS)
+    syslog.openlog('rsynctransfer', syslog.LOG_PID|syslog.LOG_CONS)
     syslog.setlogmask(syslog.LOG_UPTO(syslog.LOG_DEBUG))
 
     if len(sys.argv) < 2:
-        #print Usage: rsyncupload.py path-to-configuration-file [path-to-be-rsync'd]
+        #print Usage: rsynctransfer.py path-to-configuration-file [path-to-be-rsync'd]
         sys.exit(weewx.CMD_ERROR)
 
     try:
