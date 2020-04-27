@@ -29,20 +29,39 @@ from weewx.engine import StdService
 from weeutil.weeutil import to_int, to_bool
 from weewx.cheetahgenerator import SearchList
 
-rsynct_version = "0.0.1"
+rsynct_version = "0.0.2"
 
-def logmsg(level, msg):
-    syslog.syslog(level,'rsynctransfer: %s' % msg)
+# https://github.com/weewx/weewx/wiki/WeeWX-v4-and-logging
+try:
+    # Test for new-style weewx logging by trying to import weeutil.logger
+    import weeutil.logger
+    import logging
+    log = logging.getLogger(__name__)
 
-def loginf(msg):
-    logmsg(syslog.LOG_INFO, msg)
+    def logdbg(msg):
+        log.debug(msg)
 
-def logerr(msg):
-    logmsg(syslog.LOG_ERR, msg)
+    def loginf(msg):
+        log.info(msg)
 
-def logdbg(msg):
-    logmsg(syslog.LOG_DEBUG, msg)
+    def logerr(msg):
+        log.error(msg)
 
+except ImportError:
+    # Old-style weewx logging
+    import syslog
+
+    def logmsg(level, msg):
+        syslog.syslog(level, 'rsynctransfer: %s:' % msg)
+
+    def logdbg(msg):
+        logmsg(syslog.LOG_DEBUG, msg)
+
+    def loginf(msg):
+        logmsg(syslog.LOG_INFO, msg)
+
+    def logerr(msg):
+        logmsg(syslog.LOG_ERR, msg)
 
 
 class Rsynct(SearchList):
