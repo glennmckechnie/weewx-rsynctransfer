@@ -21,3 +21,27 @@ This rejig of RSYNC is so that...
 
 * For full flexibilty, use this in conjunction with weewx's **report_timing option**. See the section on [Customizing the report generation time](http://www.weewx.com/docs/customizing.htm#customizing_gen_time)
 
+***Instructions:***
+
+1. Download the skin to your weewx machine.
+
+    <pre>wget -O weewx-rsynctransfer.zip https://github.com/glennmckechnie/weewx-rsynctransfer/archive/master.zip</pre>
+
+2. Change to that directory and run the weewx extension installer
+
+   for the newer 5.x weewx versions it is now...
+
+   <pre>sudo weectl extension install weewx-rsynctransfer.zip</pre>
+   
+   or for the older 4.x weewx versions it remains...
+
+   <pre>sudo wee_extension --install weewx-rsynctransfer.zip</pre>
+
+4. Restart weewx
+
+   <pre>
+   sudo /etc/init.d/weewx stop
+
+   sudo /etc/init.d/weewx start
+   </pre>
+
