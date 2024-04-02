@@ -1,6 +1,6 @@
 # installer for wxobs
 # Copyright 2016 Matthew Wall
-# Co-opted by Glenn McKechnie 2017
+# Co-opted by Glenn McKechnie 2017-2024
 # Distributed under the terms of the GNU Public License (GPLv3)
 """
     #-O, --omit-dir-times        omit directories from --times
@@ -32,7 +32,7 @@ class rsynctransferInstaller(ExtensionInstaller):
         super(rsynctransferInstaller, self).__init__(
             version="0.7.0",
             name='rsynctransfer',
-            description='Transfer weewx files to where-ever',
+            description='Transfer weewx files to where-ever, local, remote...',
             author="Glenn McKechnie",
             author_email="glenn.mckechnie@gmail.com",
             config={

@@ -4,20 +4,21 @@
 #
 #    Modified to allow multiple source directories to be transferred in the one
 #    session, rsync to localhost, addition of dated dir structure on remote,
-#    include an rsync_option, skin name for logging
-#    (c) 2017 Glenn McKechnie <glenn.mckechnie@gmail.com>
+#    include any rsync_option, skin name for logging
+#    (c) 2017-2024 Glenn McKechnie <glenn.mckechnie@gmail.com>
 #
 #    See the file LICENSE.txt for your full rights.
 #
-#    $Id: rsyncupload.py 2766 2014-12-02 02:45:36Z tkeffer $
 #
-"""For uploading files to a remove server via Rsync"""
+"""
+For transferring files; anywhere.
+To a remote server, to a thumb drive all via Rsync
+"""
 
 import os
 import errno
 import sys
 import subprocess
-import syslog
 import time
 import configobj
 
@@ -71,14 +72,14 @@ class Rsynct(SearchList):
     Its default behaviour is to keep track of what files have changed,
     and only updates changed files, eg: /var/www/html/weewx transfers
     for the web server.
-    
+
     Now modified to allow recursive behaviour, as well as additional
     directories at the remote end.
     """
-    
+
 
     def __init__(self, generator):
-    
+
         SearchList.__init__(self, generator)
         """Initialize an instance of RsyncUpload.
 
@@ -139,6 +140,18 @@ class Rsynct(SearchList):
         ssh_options=None
         compress=False
         log_success=True
+        "=========="============"
+        3.9.2
+        rsynctransfer: dict fetch:  Bool values for delete = (False,) and compress is (True,):
+        Apr 28 14:19:09 masterofpis wee_reports[20823]: rsynctransfer: timestamp used for rsyncremotespec  - :
+        Apr 28 14:19:09 masterofpis wee_reports[20823]: rsynctransfer:  state of delete = <type 'tuple'> and compress is <type 'tuple'>:
+        Apr 28 14:19:09 masterofpis wee_reports[20823]: rsynctransfer:  Bool values for delete = (False,) and compress is (True,):
+        Apr 28 14:19:09 masterofpis wee_reports[20823]: rsynctransfer: cmddelT = ['rsync', '-a', '-Ovz', '--stats']:
+        Apr 28 14:19:09 masterofpis wee_reports[20823]: rsynctransfer: cmddelA = ['rsync', '-a', '-Ovz', '--stats', '--delete']:
+        Apr 28 14:19:09 masterofpis wee_reports[20823]: rsynctransfer: cmdcompT = ['rsync', '-a', '-Ovz', '--stats', '--delete']:
+        Apr 28 14:19:09 masterofpis wee_reports[20823]: rsynctransfer: cmdcompA = ['rsync', '-a', '-Ovz', '--stats', '--delete', '--compress']:
+        Apr 28 14:19:09 masterofpis wee_reports[20823]: rsynctransfer:  cmd is ['rsync', '-a', '-Ovz', '--stats', '--delete', '--compress', '-e ssh -p 22', '/var/www/html/weewx/', 'pinochio@192.168.1.62:/var/www/html/weewx']:
+        Apr 28 14:19:10 masterofpis wee_reports[20823]: rsynctransfer: : rsync'd 126 files (1,854,920 bytes) in 0.50 s
         """
 
         self.rsynct_version = rsynct_version
@@ -164,10 +177,22 @@ class Rsynct(SearchList):
         self.port        = _s.get('port',22),
         self.rsync_opt   = _s.get('rsync_options','-a'),
         self.ssh_options = _s.get('ssh_options', " "),
-        self.compress    = to_bool(_s.get('compress', False)),
-        self.delete      = to_bool(_s.get('delete', False)),
+        # NO commas else to_bool / bool exercise fails (False, == True)
+        self.compress    = to_bool(_s.get('compress', False))
+        self.delete      = to_bool(_s.get('delete', False))
+        #self.compress    = _s.get('compress', False)
+        #self.delete      = _s.get('delete', False)
+        # FIXME  DO NEXT !!!
+        #self.y      = to_bool(_s.get('delete', 'y')),
+        #self.n      = to_bool(_s.get('delete', 'n')),
         self.log_success = _s.get('log_success'),
         #return
+        #self.compress    = bool(False)
+        #self.delete      = bool(True)
+        #self.compress    = to_bool(''.join([str(elem) for (elem) in self.compress]))
+        #  self.compress    = to_bool(''.join(map(str,self.compress)))
+        # self.delete      = to_bool(''.join(map(str,self.delete)))
+        ##loginf("dict fetch:  Bool values for delete = %s and compress is %s" % (self.delete, self.compress))
 
         wdebug = 2
         if wdebug >= 2:
@@ -206,7 +231,7 @@ class Rsynct(SearchList):
             print("none")
             date_dir_str = ''
         if wdebug >= 2:
-            loginf("timestamp used for rsyncremotespec  - %s" % date_dir_str)
+            logdbg("timestamp used for rsyncremotespec  - %s" % date_dir_str)
 
         # allow local transfers
         if self.server == 'localhost':
@@ -254,14 +279,8 @@ class Rsynct(SearchList):
 
         # construct the command argument
         cmd = ['rsync']
-        # -a archive means:
-        #   recursive, copy symlinks as symlinks, preserve perm's, preserve
-        #   modification times, preserve group and owner, preserve device
-        #   files and special files, but not ACLs, no hardlinks, and no
-        #   extended attributes
-        cmd.extend(["-a"])
 
-        # add any others as required, but add them now (before ssh str)
+        # add rsync options as supplied, but add them now (before ssh str)
         if self.rsync_opt:
             cmd.extend(["%s" % rsyncoptstring])
 
@@ -269,6 +288,8 @@ class Rsynct(SearchList):
         cmd.extend(["--stats"])
 
         # Remove files remotely when they're removed locally
+        #logdbg(" state of delete = %s and compress is %s" % (type(self.delete), type(self.compress)))
+        #logdbg(" Bool values for delete = %s and compress is %s" % (self.delete, self.compress))
         if self.delete:
             cmd.extend(["--delete"])
         if self.compress:
@@ -324,7 +345,9 @@ class Rsynct(SearchList):
         try:
             # perform the actual rsync transfer...
             if wdebug >= 2:
-                loginf("cmd = %s %s %s %s %s %s %s %s %s" % (cmd[0],cmd[1],cmd[2],cmd[3],cmd[4],cmd[5],cmd[6],cmd[7],cmd[8]))
+                #loginf("cmd = %s %s %s %s %s %s %s %s %s" % (cmd[0],cmd[1],cmd[2],cmd[3],cmd[4],cmd[5],cmd[6],cmd[7],cmd[8]))
+                logdbg(" cmd is %s" % (" ".join(cmd)))
+                pass
             #print ("cmd = ", cmd[0],cmd[1],cmd[2],cmd[3],cmd[4],cmd[5],cmd[6],cmd[7],cmd[8],)
             rsynccmd = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             stdout = rsynccmd.communicate()[0]
@@ -456,7 +479,7 @@ if __name__ == '__main__':
     # everything else will be actioned on though.
     #
     # Running this directly returns an error
-    #$ PYTHONPATH=/usr/share/weewx python /usr/share/weewx/weeutil/rsynctransferfer.py
+    #$ PYTHONPATH=/usr/share/weewx python /usr/share/weewx/weeutil/rsynctransfer.py
     #   Traceback (most recent call last):
     #  File "/usr/share/weewx/weeutil/rsynctransfer.py", line 23, in <module>
     #    import weewx.engine
@@ -496,5 +519,5 @@ if __name__ == '__main__':
         rsync_dir = sys.argv[2]
 
     rsync_transfer = Rsynct(rsync_dir, **config_dict['StdReport']['RSYNC'])
-    rsynctransfer()
-    
+    #rsynctransfer()
+
